@@ -13,12 +13,12 @@ from itemadapter import ItemAdapter
 def convert_duration(duration: str) -> int:
     """Convert a duration string to its minutes counterpart"""
     if "h" not in duration:
-        minutes = int(duration.replace("min", "").strip())
-    elif "min" not in duration:
+        minutes = int(duration.replace("m", "").strip())
+    elif "m" not in duration:
         minutes = int(duration.replace("h", "").strip())
     else:
         duration = (duration
-                    .replace("min", "")
+                    .replace("m", "")
                     .split("h"))
         hours, minutes = (int(elem.strip())
                           for elem in duration)
@@ -29,21 +29,27 @@ def convert_duration(duration: str) -> int:
 class CleanFilmPipeline:
     def process_item(self, item, spider):
         adapter = ItemAdapter(item)
-        field_names = adapter.field_names()
+        field_names = adapter.field_names() 
+        LIST_FIELDS = ("main_casting", "genres", "countries")
 
-        # Strip trailing spaces
+        # Strip trailing spaces for non list fields
         for field_name in field_names:
-            if field_name not in ("main_casting", "genres", "countries"):
+            if field_name not in LIST_FIELDS:
                 value = adapter.get(field_name)
                 try:
                     adapter[field_name] = value.strip()
                 except AttributeError:
                     adapter[field_name] = None
 
+        # Join elements for list fields
+        for field_name in LIST_FIELDS:
+            value = adapter.get(field_name)
+            adapter[field_name] = ", ".join(value)
+
         # Remove "Titre original : "
         tor = adapter.get("original_title")
         if tor is not None:
-            adapter["original_title"] = tor.replace("Titre original : ", "")
+            adapter["original_title"] = tor.replace("Original title: ", "")
 
         # Convert score to float
         score = adapter.get("score")
