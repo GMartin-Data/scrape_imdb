@@ -1,12 +1,13 @@
 from typing import Iterable
+
 import scrapy
 
+from imdbscraper.items import FilmItem
 
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
     "Accept-Language": "fr"
 }
-URL = "https://www.imdb.com/title/tt0816692/?ref_=nv_sr_srsg_0_tt_8_nm_0_q_Interstella"
 
 class FilmspiderSpider(scrapy.Spider):
     name = "filmspider"
@@ -41,16 +42,18 @@ class FilmspiderSpider(scrapy.Spider):
         actors = credits.css("div > ul li")
         casting = [actor.css("a::text").get()
                    for actor in actors]
+        
+        film_item = FilmItem()
 
-        yield {
-            "title": response.css("span[data-testid='hero__primary-text']::text").get(),
-            "original_title": response.css("h1 + div::text").get(),
-            "score": response.css("div[data-testid='hero-rating-bar__aggregate-rating__score'] > span ::text").get(),
-            "year": response.css(f"{TOP_INFO} li:nth-child(1) > a ::text").get(),
-            "audience": response.css(f"{TOP_INFO} li:nth-child(2) > a ::text").get(),
-            "duration": response.css(f"{TOP_INFO} li:nth-child(3) ::text").get(),
-            "genres": genres,
-            "synopsis": response.css("span[data-testid='plot-xs_to_m'] ::text").get(),
-            "main_casting": casting,
-            "countries": response.css("li[data-testid='title-details-origin'] a::text").get(),
-        }
+        film_item["title"] = response.css("span[data-testid='hero__primary-text']::text").get()
+        film_item["original_title"] = response.css("h1 + div::text").get()
+        film_item["score"] = response.css("div[data-testid='hero-rating-bar__aggregate-rating__score'] > span ::text").get()
+        film_item["year"] = response.css(f"{TOP_INFO} li:nth-child(1) > a ::text").get()
+        film_item["audience"] = response.css(f"{TOP_INFO} li:nth-child(2) > a ::text").get()
+        film_item["duration"] = response.css(f"{TOP_INFO} li:nth-child(3) ::text").get()
+        film_item["genres"] = genres
+        film_item["synopsis"] = response.css("span[data-testid='plot-xs_to_m'] ::text").get()
+        film_item["main_casting"] = casting
+        film_item["countries"] = response.css("li[data-testid='title-details-origin'] a::text").get()
+
+        yield film_item
