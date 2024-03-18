@@ -10,6 +10,65 @@ import sqlite3
 from itemadapter import ItemAdapter
 
 
+def convert_duration(duration: str) -> int:
+    """Convert a duration string to its minutes counterpart"""
+    if "h" not in duration:
+        minutes = int(duration.replace("min", "").strip())
+    elif "min" not in duration:
+        minutes = int(duration.replace("h", "").strip())
+    else:
+        duration = (duration
+                    .replace("min", "")
+                    .split("h"))
+        hours, minutes = (int(elem.strip())
+                          for elem in duration)
+        minutes = hours * 60 + minutes
+    return minutes
+
+
+class CleanFilmPipeline:
+    def process_item(self, item, spider):
+        adapter = ItemAdapter(item)
+        field_names = adapter.field_names()
+
+        # Strip trailing spaces
+        for field_name in field_names:
+            if field_name not in ("main_casting", "genres", "countries"):
+                value = adapter.get(field_name)
+                try:
+                    adapter[field_name] = value.strip()
+                except AttributeError:
+                    adapter[field_name] = None
+
+        # Remove "Titre original : "
+        tor = adapter.get("original_title")
+        if tor is not None:
+            adapter["original_title"] = tor.replace("Titre original : ", "")
+
+        # Convert score to float
+        score = adapter.get("score")
+        try:
+            score = float(score.strip().replace(",", "."))
+        except AttributeError:
+            score = None
+        
+        # Convert year to int
+        year = adapter.get("year")
+        try:
+            adapter["year"] = int(year)
+        except AttributeError:
+            adapter["year"] = None
+
+        # Convert duration to minutes
+        duration = adapter.get("duration")
+        try:
+           adapter["duration"] = convert_duration(duration)
+        except Exception as e:
+            adapter["duration"] = None
+        
+        return item
+        
+
 class StoreSQLitePipeline:
     def __init__(self):
         self.con = sqlite3.connect("imdb.db")
