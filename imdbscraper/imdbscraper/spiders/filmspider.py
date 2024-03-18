@@ -52,5 +52,5 @@ class FilmspiderSpider(scrapy.Spider):
             "genres": genres,
             "synopsis": response.css("span[data-testid='plot-xs_to_m'] ::text").get(),
             "main_casting": casting,
-            "country": response.css("li[data-testid='title-details-origin'] a::text").get(),
+            "countries": response.css("li[data-testid='title-details-origin'] a::text").get(),
         }
