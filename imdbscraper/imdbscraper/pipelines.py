@@ -10,7 +10,7 @@ import sqlite3
 from itemadapter import ItemAdapter
 
 
-class FilmscraperPipeline:
+class StoreSQLitePipeline:
     def __init__(self):
         self.con = sqlite3.connect("imdb.db")
         self.cur = self.con.cursor()
